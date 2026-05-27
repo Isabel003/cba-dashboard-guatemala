@@ -1,0 +1,145 @@
+{
+  "ts": "2026-05-26T19:39:13.181Z",
+  "datos": [
+    {
+      "periodo": "Enero 2024",
+      "costoDiario": 21,
+      "costoMensual": 654
+    },
+    {
+      "periodo": "Febrero 2024",
+      "costoDiario": 21,
+      "costoMensual": 647
+    },
+    {
+      "periodo": "Marzo 2024",
+      "costoDiario": 21,
+      "costoMensual": 650
+    },
+    {
+      "periodo": "Abril 2024",
+      "costoDiario": 21,
+      "costoMensual": 657
+    },
+    {
+      "periodo": "Mayo 2024",
+      "costoDiario": 22,
+      "costoMensual": 663
+    },
+    {
+      "periodo": "Junio 2024",
+      "costoDiario": 22,
+      "costoMensual": 670
+    },
+    {
+      "periodo": "Julio 2024",
+      "costoDiario": 22,
+      "costoMensual": 689
+    },
+    {
+      "periodo": "Agosto 2024",
+      "costoDiario": 23,
+      "costoMensual": 695
+    },
+    {
+      "periodo": "Septiembre 2024",
+      "costoDiario": 23,
+      "costoMensual": 692
+    },
+    {
+      "periodo": "Octubre 2024",
+      "costoDiario": 23,
+      "costoMensual": 692
+    },
+    {
+      "periodo": "Noviembre 2024",
+      "costoDiario": 23,
+      "costoMensual": 690
+    },
+    {
+      "periodo": "Diciembre 2024",
+      "costoDiario": 23,
+      "costoMensual": 700
+    },
+    {
+      "periodo": "Enero 2025",
+      "costoDiario": 23,
+      "costoMensual": 699
+    },
+    {
+      "periodo": "Febrero 2025",
+      "costoDiario": 23,
+      "costoMensual": 697
+    },
+    {
+      "periodo": "Marzo 2025",
+      "costoDiario": 23,
+      "costoMensual": 698
+    },
+    {
+      "periodo": "Abril 2025",
+      "costoDiario": 23,
+      "costoMensual": 700
+    },
+    {
+      "periodo": "Mayo 2025",
+      "costoDiario": 23,
+      "costoMensual": 704
+    },
+    {
+      "periodo": "Junio 2025",
+      "costoDiario": 23,
+      "costoMensual": 706
+    },
+    {
+      "periodo": "Julio 2025",
+      "costoDiario": 23,
+      "costoMensual": 713
+    },
+    {
+      "periodo": "Agosto 2025",
+      "costoDiario": 23,
+      "costoMensual": 712
+    },
+    {
+      "periodo": "Septiembre 2025",
+      "costoDiario": 23,
+      "costoMensual": 711
+    },
+    {
+      "periodo": "Octubre 2025",
+      "costoDiario": 23,
+      "costoMensual": 712
+    },
+    {
+      "periodo": "Noviembre 2025",
+      "costoDiario": 23,
+      "costoMensual": 715
+    },
+    {
+      "periodo": "Diciembre 2025",
+      "costoDiario": 23,
+      "costoMensual": 715
+    },
+    {
+      "periodo": "Enero 2026",
+      "costoDiario": 23,
+      "costoMensual": 713
+    },
+    {
+      "periodo": "Febrero 2026",
+      "costoDiario": 23,
+      "costoMensual": 716
+    },
+    {
+      "periodo": "Marzo 2026",
+      "costoDiario": 23,
+      "costoMensual": 718
+    },
+    {
+      "periodo": "Abril 2026",
+      "costoDiario": 24,
+      "costoMensual": 722
+    }
+  ]
+}
