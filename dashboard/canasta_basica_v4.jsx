@@ -850,10 +850,9 @@ const NAV=[
 
 // ── APP ───────────────────────────────────────────────────────
 export default function App() {
-  const [dark,setDark]=useState(false);
   const [page,setPage]=useState("overview");
   const [sidebarOpen,setSidebarOpen]=useState(true);
-  const t=dark?DARK:LIGHT;
+  const t=LIGHT;
   const api=useINEApi();
 
   return(
@@ -899,27 +898,11 @@ export default function App() {
 
         {/* Footer sidebar */}
         <div style={{padding:"12px 8px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-          {/* Toggle modo oscuro */}
-          <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:4}}>
-            <span style={{fontSize:14,color:"#4a6080",flexShrink:0}}>🌙</span>
-            {sidebarOpen&&(
-              <>
-                <span style={{color:"#4a6080",fontSize:13,flex:1}}>Modo Oscuro</span>
-                <div onClick={()=>setDark(d=>!d)} style={{
-                  width:40,height:22,borderRadius:11,background:dark?t.accent:"#1e3347",
-                  cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0,
-                }}>
-                  <div style={{width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:dark?21:3,transition:"left .2s"}}/>
-                </div>
-              </>
-            )}
-          </div>
-          {/* Usuario */}
           {sidebarOpen&&(
             <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10}}>
               <div style={{width:32,height:32,borderRadius:"50%",background:t.accent,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:12,flexShrink:0}}>AN</div>
               <div>
-                <div style={{color:"#e2e8f0",fontSize:12,fontWeight:600,lineHeight:1.2}}>Analista INE</div>
+                <div style={{color:"#e2e8f0",fontSize:12,fontWeight:600,lineHeight:1.2}}>Analista</div>
                 <div style={{color:"#334155",fontSize:11}}>Guatemala</div>
               </div>
             </div>
@@ -951,12 +934,6 @@ export default function App() {
               <span style={{fontSize:11,fontWeight:700,color:"#d97706"}}>Datos locales</span>
             </div>
           )}
-          <a href="https://datos.ine.gob.gt" target="_blank" rel="noreferrer"
-            style={{fontSize:12,color:t.textSub,textDecoration:"none",fontWeight:500}}>
-            datos.ine.gob.gt
-          </a>
-          {/* Campana */}
-          <button style={{background:"none",border:"none",cursor:"pointer",color:t.textMuted,fontSize:18,padding:4}}>🔔</button>
           {/* Avatar */}
           <div style={{width:34,height:34,borderRadius:"50%",background:t.accent,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:12,flexShrink:0}}>GT</div>
         </div>
