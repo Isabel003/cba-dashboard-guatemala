@@ -87,7 +87,17 @@ async function start() {
     await fetchAndParseAllData();
     console.log("✓ [CRON] Datos actualizados.");
   }, { timezone: "America/Guatemala" });
+  const path = require("path");
 
+  // Servir el frontend compilado
+  app.use(express.static(path.join(__dirname, "../dashboard/dist")));
+
+  // Cualquier ruta que no sea /api redirige al frontend
+  app.get("*", (req, res) => {
+    if (!req.path.startsWith("/api")) {
+      res.sendFile(path.join(__dirname, "../dashboard/dist/index.html"));
+    }
+  });
   app.listen(PORT, () => {
     console.log(`✓ Servidor corriendo en http://localhost:${PORT}`);
     console.log(`  Prueba:  http://localhost:${PORT}/api/v1/canasta/resumen\n`);
