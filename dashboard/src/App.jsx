@@ -4,7 +4,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Legend
 } from "recharts";
 
-const API_BASE = "http://localhost:3001/api/v1";
+const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";
 
 // ── Paleta de colores (referencia imagen) ────────────────────
 const LIGHT = {
