@@ -6,7 +6,7 @@ import {
 
 const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";
 
-// ── Paleta de colores (referencia imagen) ────────────────────
+
 const LIGHT = {
   bg:         "#f0f4f8",
   card:       "#ffffff",
@@ -16,7 +16,7 @@ const LIGHT = {
   textSub:    "#64748b",
   textMuted:  "#94a3b8",
   border:     "#e2e8f0",
-  accent:     "#10b981",   // esmeralda — color principal
+  accent:     "#10b981",   
   accentSoft: "#ecfdf5",
   accentDark: "#059669",
   positive:   "#10b981",
