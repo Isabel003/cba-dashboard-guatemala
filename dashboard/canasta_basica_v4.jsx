@@ -839,13 +839,268 @@ function ApiPage({api,t}) {
   );
 }
 
+
+// ── COMPARADOR DE PERÍODOS ────────────────────────────────────
+function ComparadorPage({api,t}) {
+  const{periodos,status}=api;
+  const periodosOrdenados=useMemo(()=>[...periodos].sort((a,b)=>sortPer(a)-sortPer(b)),[periodos]);
+
+  const [perA,setPerA]=useState(null);
+  const [perB,setPerB]=useState(null);
+  const [datosA,setDatosA]=useState([]);
+  const [datosB,setDatosB]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState(null);
+  const [filtroGrupo,setFiltroGrupo]=useState("Todos");
+  const [busqueda,setBusqueda]=useState("");
+  const [orden,setOrden]=useState("diferencia"); // diferencia | nombre | precioA | precioB
+
+  const get=useCallback(async path=>{
+    const r=await fetch(`${API_BASE}${path}`);
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"Error");
+    return j;
+  },[]);
+
+  // Cargar datos de ambos períodos
+  const comparar=useCallback(async()=>{
+    if(!perA||!perB) return;
+    if(perA===perB){setError("Selecciona dos períodos diferentes.");return;}
+    setLoading(true); setError(null);
+    try{
+      const [rA,rB]=await Promise.all([
+        get(`/productos?periodo=${encodeURIComponent(perA)}`),
+        get(`/productos?periodo=${encodeURIComponent(perB)}`),
+      ]);
+      setDatosA(rA.data);
+      setDatosB(rB.data);
+    }catch(e){setError(e.message);}
+    setLoading(false);
+  },[perA,perB,get]);
+
+  // Combinar datos de ambos períodos por producto
+  const comparativa=useMemo(()=>{
+    if(!datosA.length||!datosB.length) return [];
+    const mapB={};
+    datosB.forEach(p=>{mapB[p.producto]=p;});
+    return datosA.map(pA=>{
+      const pB=mapB[pA.producto];
+      if(!pB) return null;
+      const precioA=pA.precio||0;
+      const precioB=pB.precio||0;
+      const diferencia=precioB-precioA;
+      const pct=precioA>0?Math.round(((precioB-precioA)/precioA)*10000)/100:0;
+      return{
+        producto:pA.producto, grupo:pA.grupo,
+        precioA, precioB, diferencia, pct,
+        unidad:pA.unidad,
+      };
+    }).filter(Boolean);
+  },[datosA,datosB]);
+
+  const grupos=useMemo(()=>["Todos",...new Set(comparativa.map(p=>p.grupo))],[comparativa]);
+
+  const filtrada=useMemo(()=>{
+    let d=[...comparativa];
+    if(filtroGrupo!=="Todos") d=d.filter(p=>p.grupo===filtroGrupo);
+    if(busqueda) d=d.filter(p=>p.producto.toLowerCase().includes(busqueda.toLowerCase()));
+    if(orden==="diferencia") d.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+    if(orden==="nombre")     d.sort((a,b)=>a.producto.localeCompare(b.producto));
+    if(orden==="precioA")    d.sort((a,b)=>b.precioA-a.precioA);
+    if(orden==="precioB")    d.sort((a,b)=>b.precioB-a.precioB);
+    return d;
+  },[comparativa,filtroGrupo,busqueda,orden]);
+
+  // Estadísticas resumen
+  const stats=useMemo(()=>{
+    if(!filtrada.length) return null;
+    const subieron=filtrada.filter(p=>p.diferencia>0);
+    const bajaron=filtrada.filter(p=>p.diferencia<0);
+    const sinCambio=filtrada.filter(p=>p.diferencia===0);
+    const mayorAlza=filtrada.reduce((m,p)=>p.pct>m.pct?p:m,filtrada[0]);
+    const mayorBaja=filtrada.reduce((m,p)=>p.pct<m.pct?p:m,filtrada[0]);
+    const totalA=filtrada.reduce((s,p)=>s+p.precioA,0);
+    const totalB=filtrada.reduce((s,p)=>s+p.precioB,0);
+    return{subieron:subieron.length,bajaron:bajaron.length,sinCambio:sinCambio.length,mayorAlza,mayorBaja,totalA,totalB};
+  },[filtrada]);
+
+  const noConectado=status!=="live"&&status!=="fallback";
+
+  return(
+    <div>
+      {/* Header */}
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:11,color:t.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>Análisis</div>
+        <h1 style={{fontSize:26,fontWeight:800,color:t.text,margin:0}}>Comparador de Períodos</h1>
+        <p style={{color:t.textSub,fontSize:13,marginTop:4}}>Selecciona dos meses para ver cómo cambió el precio de cada producto</p>
+      </div>
+
+      {/* Selectores */}
+      <div style={{background:t.card,borderRadius:14,padding:22,border:`1px solid ${t.border}`,marginBottom:20}}>
+        <div style={{display:"flex",gap:16,alignItems:"flex-end",flexWrap:"wrap"}}>
+          {/* Período A */}
+          <div style={{flex:1,minWidth:180}}>
+            <div style={{fontSize:11,color:t.textMuted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}}>Período base</div>
+            <select value={perA||""} onChange={e=>setPerA(e.target.value)}
+              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${perA?t.accent:t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
+              <option value="">Seleccionar mes...</option>
+              {periodosOrdenados.map(p=><option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+
+          {/* Flecha central */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,paddingBottom:4}}>
+            <div style={{fontSize:22,color:t.textMuted}}>⇄</div>
+          </div>
+
+          {/* Período B */}
+          <div style={{flex:1,minWidth:180}}>
+            <div style={{fontSize:11,color:t.textMuted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}}>Período a comparar</div>
+            <select value={perB||""} onChange={e=>setPerB(e.target.value)}
+              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${perB?t.accent:t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
+              <option value="">Seleccionar mes...</option>
+              {periodosOrdenados.map(p=><option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+
+          {/* Botón comparar */}
+          <button onClick={comparar} disabled={!perA||!perB||loading}
+            style={{background:perA&&perB&&!loading?t.accent:"#94a3b8",color:"#fff",border:"none",borderRadius:10,padding:"10px 24px",cursor:perA&&perB&&!loading?"pointer":"not-allowed",fontSize:13,fontWeight:700,whiteSpace:"nowrap",height:42}}>
+            {loading?"Cargando...":"Comparar"}
+          </button>
+        </div>
+        {error&&<div style={{marginTop:12,background:"#fef2f2",borderRadius:8,padding:10,fontSize:12,color:"#ef4444"}}>{error}</div>}
+        {noConectado&&<div style={{marginTop:12,background:t.accentSoft,borderRadius:8,padding:10,fontSize:12,color:t.accent,fontWeight:600}}>Conecta el backend para usar el comparador con datos reales del INE.</div>}
+      </div>
+
+      {/* Estadísticas resumen */}
+      {stats&&(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14,marginBottom:20}}>
+          <div style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
+            <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>Subieron</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#ef4444"}}>{stats.subieron}</div>
+            <div style={{fontSize:11,color:t.textSub}}>productos más caros</div>
+          </div>
+          <div style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
+            <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>Bajaron</div>
+            <div style={{fontSize:24,fontWeight:800,color:t.accent}}>{stats.bajaron}</div>
+            <div style={{fontSize:11,color:t.textSub}}>productos más baratos</div>
+          </div>
+          <div style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
+            <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>Sin cambio</div>
+            <div style={{fontSize:24,fontWeight:800,color:t.textSub}}>{stats.sinCambio}</div>
+            <div style={{fontSize:11,color:t.textSub}}>precio igual</div>
+          </div>
+          <div style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
+            <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>Mayor alza</div>
+            <div style={{fontSize:14,fontWeight:800,color:"#ef4444",lineHeight:1.2}}>{stats.mayorAlza?.producto?.split(" ").slice(0,3).join(" ")}</div>
+            <div style={{fontSize:12,color:"#ef4444",fontWeight:700}}>+{stats.mayorAlza?.pct?.toFixed(2)}%</div>
+          </div>
+          <div style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
+            <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>Mayor baja</div>
+            <div style={{fontSize:14,fontWeight:800,color:t.accent,lineHeight:1.2}}>{stats.mayorBaja?.producto?.split(" ").slice(0,3).join(" ")}</div>
+            <div style={{fontSize:12,color:t.accent,fontWeight:700}}>{stats.mayorBaja?.pct?.toFixed(2)}%</div>
+          </div>
+          <div style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
+            <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>Variación total</div>
+            <div style={{fontSize:20,fontWeight:800,color:stats.totalB>stats.totalA?"#ef4444":t.accent}}>
+              {stats.totalB>stats.totalA?"+":""}{((stats.totalB-stats.totalA)/stats.totalA*100).toFixed(2)}%
+            </div>
+            <div style={{fontSize:11,color:t.textSub}}>Q{stats.totalA.toFixed(0)} → Q{stats.totalB.toFixed(0)}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros */}
+      {comparativa.length>0&&(
+        <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+          <div style={{flex:1,minWidth:180,position:"relative"}}>
+            <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:t.textMuted}}>🔍</span>
+            <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar producto..."
+              style={{width:"100%",padding:"9px 12px 9px 34px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none",boxSizing:"border-box"}}/>
+          </div>
+          <select value={filtroGrupo} onChange={e=>setFiltroGrupo(e.target.value)}
+            style={{padding:"9px 14px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
+            {grupos.map(g=><option key={g}>{g}</option>)}
+          </select>
+          <select value={orden} onChange={e=>setOrden(e.target.value)}
+            style={{padding:"9px 14px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
+            <option value="diferencia">Mayor variación primero</option>
+            <option value="nombre">Nombre A→Z</option>
+            <option value="precioA">Precio {perA} ↓</option>
+            <option value="precioB">Precio {perB} ↓</option>
+          </select>
+          <div style={{fontSize:12,color:t.textMuted,whiteSpace:"nowrap"}}>{filtrada.length} productos</div>
+        </div>
+      )}
+
+      {/* Tabla comparativa */}
+      {comparativa.length>0&&(
+        <div style={{background:t.card,borderRadius:14,border:`1px solid ${t.border}`,overflow:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",minWidth:640}}>
+            <thead>
+              <tr style={{background:t.bg,borderBottom:`1px solid ${t.border}`}}>
+                <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:700,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.06em",width:"35%"}}>Producto</th>
+                <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:700,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>Grupo</th>
+                <th style={{padding:"12px 16px",textAlign:"right",fontSize:11,fontWeight:700,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>{perA}</th>
+                <th style={{padding:"12px 16px",textAlign:"right",fontSize:11,fontWeight:700,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>{perB}</th>
+                <th style={{padding:"12px 16px",textAlign:"right",fontSize:11,fontWeight:700,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>Diferencia</th>
+                <th style={{padding:"12px 16px",textAlign:"right",fontSize:11,fontWeight:700,color:t.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>Variación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtrada.map((p,i)=>{
+                const sube=p.diferencia>0;
+                const baja=p.diferencia<0;
+                const igual=p.diferencia===0;
+                return(
+                  <tr key={p.producto+i} style={{borderBottom:`1px solid ${t.border}`,background:i%2===0?t.card:t.bg,transition:"background .1s"}}
+                    onMouseEnter={e=>e.currentTarget.style.background=t.accentSoft}
+                    onMouseLeave={e=>e.currentTarget.style.background=i%2===0?t.card:t.bg}>
+                    <td style={{padding:"11px 16px",color:t.text,fontWeight:600,fontSize:13}}>{p.producto}</td>
+                    <td style={{padding:"11px 16px"}}>
+                      <span style={{background:(CAT_COLORS[p.grupo]||"#64748b")+"18",color:CAT_COLORS[p.grupo]||"#64748b",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700}}>{p.grupo}</span>
+                    </td>
+                    <td style={{padding:"11px 16px",textAlign:"right",fontFamily:"monospace",fontSize:13,color:t.textSub}}>Q{p.precioA.toFixed(2)}</td>
+                    <td style={{padding:"11px 16px",textAlign:"right",fontFamily:"monospace",fontSize:13,fontWeight:700,color:sube?"#ef4444":baja?t.accent:t.text}}>Q{p.precioB.toFixed(2)}</td>
+                    <td style={{padding:"11px 16px",textAlign:"right",fontFamily:"monospace",fontSize:13,color:sube?"#ef4444":baja?t.accent:t.textMuted}}>
+                      {igual?"—":(sube?"+":"")}Q{p.diferencia.toFixed(2)}
+                    </td>
+                    <td style={{padding:"11px 16px",textAlign:"right"}}>
+                      {igual
+                        ?<span style={{background:"#f1f5f9",color:"#64748b",borderRadius:6,padding:"3px 8px",fontSize:12,fontWeight:700}}>— 0%</span>
+                        :<span style={{background:sube?"#fef2f2":"#f0fdf4",color:sube?"#ef4444":t.accent,borderRadius:6,padding:"3px 8px",fontSize:12,fontWeight:700}}>
+                          {sube?"↑":"↓"} {Math.abs(p.pct).toFixed(2)}%
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Estado vacío */}
+      {!comparativa.length&&!loading&&(
+        <div style={{background:t.card,borderRadius:14,padding:60,border:`1px solid ${t.border}`,textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:16}}>⇄</div>
+          <div style={{fontSize:16,fontWeight:700,color:t.text,marginBottom:8}}>Selecciona dos períodos para comparar</div>
+          <div style={{fontSize:13,color:t.textSub}}>Elige un mes base y un mes de comparación, luego presiona "Comparar".</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── NAVEGACIÓN ────────────────────────────────────────────────
 const NAV=[
-  {id:"overview",  icon:"▦",  label:"Panel General"},
-  {id:"productos", icon:"⊞",  label:"Productos"},
-  {id:"tendencias",icon:"↗",  label:"Estadísticas"},
-  {id:"reporte",   icon:"☰",  label:"Reportes API"},
-  {id:"api",       icon:"⚙",  label:"Configuración"},
+  {id:"overview",    icon:"▦",  label:"Panel General"},
+  {id:"productos",   icon:"⊞",  label:"Productos"},
+  {id:"tendencias",  icon:"↗",  label:"Estadísticas"},
+  {id:"comparador",  icon:"⇄",  label:"Comparador"},
+  {id:"reporte",     icon:"☰",  label:"Reporte IA"},
 ];
 
 // ── APP ───────────────────────────────────────────────────────
@@ -940,11 +1195,11 @@ export default function App() {
 
         {/* Página */}
         <div style={{flex:1,overflow:"auto",padding:"28px 28px"}}>
-          {page==="overview"   && <OverviewPage   api={api} t={t}/>}
-          {page==="productos"  && <ProductosPage  api={api} t={t}/>}
-          {page==="tendencias" && <TendenciasPage api={api} t={t}/>}
-          {page==="reporte"    && <ReportePage    api={api} t={t}/>}
-          {page==="api"        && <ApiPage        api={api} t={t}/>}
+          {page==="overview"   && <OverviewPage    api={api} t={t}/>}
+          {page==="productos"  && <ProductosPage   api={api} t={t}/>}
+          {page==="tendencias" && <TendenciasPage  api={api} t={t}/>}
+          {page==="comparador" && <ComparadorPage  api={api} t={t}/>}
+          {page==="reporte"    && <ReportePage     api={api} t={t}/>}
         </div>
       </div>
     </div>
