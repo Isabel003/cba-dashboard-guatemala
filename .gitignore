@@ -1,0 +1,10 @@
+﻿node_modules/
+*/node_modules/
+.env
+*/.env
+ine-backend/cache/
+dashboard/dist/
+.DS_Store
+Thumbs.db
+*.log
+@.log
