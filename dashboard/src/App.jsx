@@ -4,7 +4,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Legend
 } from "recharts";
 
-const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";
+const API_BASE = "http://localhost:3001/api/v1";
 
 // ── Paleta de colores (referencia imagen) ────────────────────
 const LIGHT = {
@@ -234,13 +234,15 @@ const ChangeBadge=({value})=>{
   );
 };
 
-// KPI Card — estilo imagen referencia
-const KPI=({label,value,sub,subIcon,subColor,t})=>(
+// KPI Card — con contexto guatemalteco
+const KPI=({label,value,sub,subIcon,subColor,t,unit})=>(
   <div style={{background:t.card,borderRadius:14,padding:"22px 24px",
     border:`1px solid ${t.border}`,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
     <div style={{fontSize:11,color:t.textMuted,fontWeight:600,
-      textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>{label}</div>
-    <div style={{fontSize:30,fontWeight:800,color:t.text,lineHeight:1,marginBottom:10}}>{value}</div>
+      textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>{label}</div>
+    {unit&&<div style={{fontSize:10,color:t.accent,fontWeight:600,marginBottom:8,
+      background:t.accentSoft,display:"inline-block",padding:"1px 8px",borderRadius:20}}>{unit}</div>}
+    <div style={{fontSize:30,fontWeight:800,color:t.text,lineHeight:1,marginBottom:10,marginTop:unit?4:0}}>{value}</div>
     {sub&&(
       <div style={{display:"flex",alignItems:"center",gap:5,fontSize:13}}>
         <span style={{color:subColor||t.accent,fontWeight:700}}>{subIcon}{sub}</span>
@@ -417,14 +419,18 @@ function OverviewPage({api,t}) {
       {/* KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16,marginBottom:24}}>
         <KPI label="CBAI per cápita" value={fQ(r.cbauPerCapita)}
+          unit="por persona / mes · Urbana"
           sub={`${r.variacionMensualU>0?"+":""}${r.variacionMensualU}%`}
           subIcon={r.variacionMensualU>0?"↗ ":"↘ "} subColor={r.variacionMensualU>0?t.positive:t.negative} t={t}/>
         <KPI label="CBAR per cápita" value={fQ(r.cbarPerCapita)}
+          unit="por persona / mes · Rural"
           sub={`${r.variacionMensualR>0?"+":""}${r.variacionMensualR}%`}
           subIcon={r.variacionMensualR>0?"↗ ":"↘ "} subColor={r.variacionMensualR>0?t.positive:t.negative} t={t}/>
         <KPI label="Brecha CBAI-CBAR" value={fQ(r.brechaUrbanoRural)}
+          unit="diferencia Urbana vs Rural"
           sub="-0.6% reducción mensual" subColor={t.positive} t={t}/>
         <KPI label="Var. anual CBAI" value={`${r.variacionAnualU??"-"}%`}
+          unit="acumulado 12 meses"
           sub={`+${r.variacionAnualU??0}pp interanual`} subIcon="↗ " subColor={t.positive} t={t}/>
       </div>
 
@@ -1095,12 +1101,19 @@ function ComparadorPage({api,t}) {
 }
 
 // ── NAVEGACIÓN ────────────────────────────────────────────────
+// Íconos SVG representativos para cada módulo
+const IcoPanel    = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+const IcoProductos= () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>;
+const IcoStats    = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+const IcoComparar = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M12 20V4"/></svg>;
+const IcoIA       = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>;
+
 const NAV=[
-  {id:"overview",    icon:"▦",  label:"Panel General"},
-  {id:"productos",   icon:"⊞",  label:"Productos"},
-  {id:"tendencias",  icon:"↗",  label:"Estadísticas"},
-  {id:"comparador",  icon:"⇄",  label:"Comparador"},
-  {id:"reporte",     icon:"☰",  label:"Reporte IA"},
+  {id:"overview",    Icon:IcoPanel,     label:"Panel General"},
+  {id:"productos",   Icon:IcoProductos, label:"Productos"},
+  {id:"tendencias",  Icon:IcoStats,     label:"Estadísticas"},
+  {id:"comparador",  Icon:IcoComparar,  label:"Comparador"},
+  {id:"reporte",     Icon:IcoIA,        label:"Reporte IA"},
 ];
 
 // ── APP ───────────────────────────────────────────────────────
@@ -1114,14 +1127,21 @@ export default function App() {
     <div style={{display:"flex",height:"100vh",background:t.bg,fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",overflow:"hidden",fontSize:14}}>
       {/* Sidebar */}
       <div style={{width:sidebarOpen?250:64,background:t.sidebar,display:"flex",flexDirection:"column",transition:"width .2s ease",overflow:"hidden",flexShrink:0,borderRight:"1px solid rgba(255,255,255,0.04)"}}>
-        {/* Logo */}
-        <div style={{padding:"20px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+        {/* Logo con bandera Guatemala */}
+        <div style={{padding:"18px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:36,height:36,borderRadius:10,background:t.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>▦</div>
+            {/* Bandera Guatemala simplificada en SVG */}
+            <div style={{width:36,height:36,borderRadius:10,overflow:"hidden",flexShrink:0,border:"2px solid rgba(255,255,255,0.15)",display:"flex"}}>
+              <div style={{width:"33%",background:"#4a90d9",height:"100%"}}/>
+              <div style={{width:"34%",background:"#ffffff",height:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:"#10b981",border:"1.5px solid #059669"}}/>
+              </div>
+              <div style={{width:"33%",background:"#4a90d9",height:"100%"}}/>
+            </div>
             {sidebarOpen&&(
               <div>
                 <div style={{color:"#e2e8f0",fontWeight:800,fontSize:14,whiteSpace:"nowrap",lineHeight:1.2}}>CBA Dashboard</div>
-                <div style={{color:"#334155",fontSize:11,whiteSpace:"nowrap"}}>Guatemala · INE</div>
+                <div style={{color:"#4a6080",fontSize:11,whiteSpace:"nowrap"}}>Guatemala · INE</div>
               </div>
             )}
           </div>
@@ -1139,7 +1159,7 @@ export default function App() {
                 border:"none",cursor:"pointer",textAlign:"left",
                 transition:"all .15s",
               }}>
-                <span style={{fontSize:16,flexShrink:0,color:isActive?"#fff":t.textSub,lineHeight:1}}>{item.icon}</span>
+                <span style={{flexShrink:0,color:isActive?"#fff":"#4a6080",lineHeight:1,display:"flex",alignItems:"center"}}><item.Icon/></span>
                 {sidebarOpen&&<span style={{color:isActive?"#fff":"#4a6080",fontSize:13,fontWeight:isActive?700:500,whiteSpace:"nowrap"}}>{item.label}</span>}
                 {sidebarOpen&&i===1&&api.periodoSel&&isActive&&(
                   <span style={{marginLeft:"auto",background:"rgba(255,255,255,0.2)",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:10,fontWeight:700}}>
@@ -1174,6 +1194,17 @@ export default function App() {
             <span>Portal BI</span>
             <span>›</span>
             <span style={{color:t.text,fontWeight:600}}>{NAV.find(n=>n.id===page)?.label||"Panel General"}</span>
+          </div>
+          {/* Insignia Guatemala */}
+          <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"#f0fdf4",borderRadius:20,border:"1px solid #86efac44"}}>
+            <div style={{display:"flex",width:20,height:14,borderRadius:2,overflow:"hidden",flexShrink:0}}>
+              <div style={{width:"33%",background:"#4a90d9"}}/>
+              <div style={{width:"34%",background:"#ffffff",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div style={{width:5,height:5,borderRadius:"50%",background:"#10b981"}}/>
+              </div>
+              <div style={{width:"33%",background:"#4a90d9"}}/>
+            </div>
+            <span style={{fontSize:11,fontWeight:700,color:"#059669"}}>Guatemala</span>
           </div>
           <div style={{flex:1}}/>
           {/* Estado conexión */}

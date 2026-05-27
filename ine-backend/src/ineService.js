@@ -407,8 +407,16 @@ function getVariaciones() {
 }
 
 function getCategorias() {
+  // Solo usar el último período — evita acumular todos los meses históricos
+  const MESES={"enero":1,"febrero":2,"marzo":3,"abril":4,"mayo":5,"junio":6,
+    "julio":7,"agosto":8,"septiembre":9,"octubre":10,"noviembre":11,"diciembre":12};
+  const sortP=p=>{const s=(p||"").toLowerCase().split(" ");return(parseInt(s[1])||0)*100+(MESES[s[0]]||0);};
+  const periodos=[...new Set(DB.productosUrbanos.map(p=>p.periodo))].sort((a,b)=>sortP(a)-sortP(b));
+  const ultimoPeriodo=periodos[periodos.length-1];
+  const soloUltimo=DB.productosUrbanos.filter(p=>p.periodo===ultimoPeriodo);
+
   const grupos={};
-  DB.productosUrbanos.forEach(p=>{
+  soloUltimo.forEach(p=>{
     if (!grupos[p.grupo]) grupos[p.grupo]={grupo:p.grupo,productos:new Set(),costoTotal:0};
     grupos[p.grupo].productos.add(p.producto);
     if (p.precio) grupos[p.grupo].costoTotal+=p.precio;
