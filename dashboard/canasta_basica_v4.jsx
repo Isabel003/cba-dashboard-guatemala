@@ -756,95 +756,6 @@ function TendenciasPage({api,t}) {
   );
 }
 
-// ── CONEXIÓN API ───────────────────────────────────────────────
-function ApiPage({api,t}) {
-  const{status,serverInfo,logs,connect,forceRefresh,iaKeyOk}=api;
-  const endpoints=[
-    {p:"/status",d:"Estado y períodos disponibles"},
-    {p:"/canasta/resumen",d:"KPIs: CBAU, CBAR, variaciones"},
-    {p:"/canasta/historico",d:"Serie histórica mensual"},
-    {p:"/productos",d:"Último período con variaciones"},
-    {p:"/productos?periodo=Enero+2025",d:"Productos de un período específico"},
-    {p:"/variaciones",d:"Ranking alzas y bajas"},
-    {p:"/categorias",d:"Grupos alimenticios y costos"},
-    {p:"/admin/refresh",d:"Fuerza re-descarga desde el INE"},
-    {p:"/ia/canasta",d:"🤖 Análisis general IA"},
-    {p:"/ia/producto/:nombre",d:"🤖 Análisis de producto"},
-    {p:"/ia/reporte",d:"🤖 Reporte ejecutivo completo"},
-  ];
-  const statusColors={idle:"#64748b",connecting:"#f59e0b",live:t.accent,fallback:"#f97316",error:"#ef4444"};
-  const statusLabels={idle:"Sin conectar",connecting:"Conectando…",live:"En vivo",fallback:"Datos locales",error:"Error"};
-  return(
-    <div>
-      <div style={{marginBottom:24}}>
-        <div style={{fontSize:11,color:t.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>Sistema</div>
-        <h1 style={{fontSize:26,fontWeight:800,color:t.text,margin:0}}>Conexión Backend INE</h1>
-        <p style={{color:t.textSub,fontSize:13,marginTop:4}}>Backend Node.js · descarga datos del INE en tiempo real</p>
-      </div>
-      {/* Estado IA */}
-      <div style={{background:iaKeyOk?t.accentSoft:"#fff7ed",borderRadius:14,padding:20,border:`1px solid ${iaKeyOk?t.accent+"44":"#fcd34d44"}`,marginBottom:18,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}>
-        <div style={{width:44,height:44,borderRadius:12,background:iaKeyOk?t.accentSoft:"#fff7ed",border:`1px solid ${iaKeyOk?t.accent+"44":"#fcd34d44"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
-          {iaKeyOk?"🤖":"🔑"}
-        </div>
-        <div style={{flex:1}}>
-          <div style={{fontWeight:700,color:t.text,marginBottom:3,fontSize:14}}>{iaKeyOk?"IA lista — API Key configurada":"API Key de OpenAI no configurada"}</div>
-          <div style={{fontSize:12,color:t.textSub}}>{iaKeyOk?"La clave vive solo en el servidor. Arquitectura segura.":"Agrega OPENAI_API_KEY=sk-... en el .env y reinicia el backend."}</div>
-        </div>
-        {!iaKeyOk&&<a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" style={{background:t.accent,color:"#fff",borderRadius:10,padding:"9px 18px",textDecoration:"none",fontWeight:700,fontSize:13}}>Obtener key →</a>}
-      </div>
-      {/* URL + botones */}
-      <div style={{background:t.card,borderRadius:14,padding:20,border:`1px solid ${t.border}`,marginBottom:18,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-        <code style={{flex:1,fontSize:12,color:t.accent,fontFamily:"monospace",background:t.bg,padding:"10px 14px",borderRadius:10,border:`1px solid ${t.border}`}}>{API_BASE}</code>
-        <button onClick={connect} disabled={status==="connecting"} style={{background:t.accent,color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",cursor:status==="connecting"?"not-allowed":"pointer",fontSize:13,fontWeight:700,opacity:status==="connecting"?0.7:1}}>
-          {status==="connecting"?"Conectando…":"Conectar"}
-        </button>
-        <button onClick={forceRefresh} style={{background:"transparent",border:`1px solid ${t.border}`,borderRadius:10,padding:"10px 20px",cursor:"pointer",fontSize:13,color:t.textSub,fontWeight:600}}>
-          Forzar refresh
-        </button>
-      </div>
-      {/* Info servidor */}
-      {serverInfo&&(
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:18}}>
-          {[{l:"Estado",v:statusLabels[status]||status,c:statusColors[status]||t.accent},{l:"CBAU",v:`${serverInfo.registros?.cbauPercapita||0} registros`},{l:"Productos",v:`${serverInfo.registros?.productosUrbanos||0}`},{l:"Períodos",v:`${serverInfo.periodos?.length||0}`}]
-            .map((s,i)=>(
-            <div key={i} style={{background:t.card,borderRadius:12,padding:"16px 18px",border:`1px solid ${t.border}`}}>
-              <div style={{fontSize:11,color:t.textMuted,textTransform:"uppercase",fontWeight:600,letterSpacing:"0.06em",marginBottom:6}}>{s.l}</div>
-              <div style={{fontSize:15,fontWeight:700,color:s.c||t.text}}>{s.v}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {/* Consola */}
-      <div style={{background:"#060f1a",borderRadius:14,padding:20,border:"1px solid #1e3347",marginBottom:18}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#10b981",fontFamily:"monospace"}}>▶ Consola</div>
-          <span style={{background:statusColors[status]+"22",color:statusColors[status]||"#64748b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700}}>{statusLabels[status]||"—"}</span>
-        </div>
-        <div style={{fontFamily:"monospace",fontSize:12,minHeight:100,maxHeight:200,overflow:"auto"}}>
-          {logs.length===0
-            ?<div style={{color:"#334155"}}>&gt; Presiona "Conectar"…</div>
-            :logs.map((l,i)=>(
-              <div key={i} style={{marginBottom:3,color:l.type==="success"?"#34d399":l.type==="error"?"#f87171":l.type==="warn"?"#fbbf24":"#64748b"}}>
-                <span style={{color:"#1e3347"}}>[{l.ts}] </span>{l.msg}
-              </div>
-            ))}
-        </div>
-      </div>
-      {/* Endpoints */}
-      <div style={{background:t.card,borderRadius:14,padding:22,border:`1px solid ${t.border}`}}>
-        <div style={{fontSize:13,fontWeight:700,color:t.text,marginBottom:16}}>Endpoints disponibles</div>
-        {endpoints.map((ep,i)=>(
-          <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 0",borderBottom:i<endpoints.length-1?`1px solid ${t.border}`:"none",flexWrap:"wrap"}}>
-            <span style={{background:t.accentSoft,color:t.accent,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:700,flexShrink:0}}>GET</span>
-            <code style={{fontSize:12,color:t.accent,fontFamily:"monospace",minWidth:220}}>{ep.p}</code>
-            <span style={{fontSize:12,color:t.textSub}}>{ep.d}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 
 // ── COMPARADOR DE PERÍODOS ────────────────────────────────────
 function ComparadorPage({api,t}) {
@@ -1127,16 +1038,11 @@ export default function App() {
     <div style={{display:"flex",height:"100vh",background:t.bg,fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",overflow:"hidden",fontSize:14}}>
       {/* Sidebar */}
       <div style={{width:sidebarOpen?250:64,background:t.sidebar,display:"flex",flexDirection:"column",transition:"width .2s ease",overflow:"hidden",flexShrink:0,borderRight:"1px solid rgba(255,255,255,0.04)"}}>
-        {/* Logo con bandera Guatemala */}
+        {/* Logo */}
         <div style={{padding:"18px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            {/* Bandera Guatemala simplificada en SVG */}
-            <div style={{width:36,height:36,borderRadius:10,overflow:"hidden",flexShrink:0,border:"2px solid rgba(255,255,255,0.15)",display:"flex"}}>
-              <div style={{width:"33%",background:"#4a90d9",height:"100%"}}/>
-              <div style={{width:"34%",background:"#ffffff",height:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:"#10b981",border:"1.5px solid #059669"}}/>
-              </div>
-              <div style={{width:"33%",background:"#4a90d9",height:"100%"}}/>
+            <div style={{width:36,height:36,borderRadius:10,background:t.accent,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
             </div>
             {sidebarOpen&&(
               <div>
@@ -1194,17 +1100,6 @@ export default function App() {
             <span>Portal BI</span>
             <span>›</span>
             <span style={{color:t.text,fontWeight:600}}>{NAV.find(n=>n.id===page)?.label||"Panel General"}</span>
-          </div>
-          {/* Insignia Guatemala */}
-          <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"#f0fdf4",borderRadius:20,border:"1px solid #86efac44"}}>
-            <div style={{display:"flex",width:20,height:14,borderRadius:2,overflow:"hidden",flexShrink:0}}>
-              <div style={{width:"33%",background:"#4a90d9"}}/>
-              <div style={{width:"34%",background:"#ffffff",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <div style={{width:5,height:5,borderRadius:"50%",background:"#10b981"}}/>
-              </div>
-              <div style={{width:"33%",background:"#4a90d9"}}/>
-            </div>
-            <span style={{fontSize:11,fontWeight:700,color:"#059669"}}>Guatemala</span>
           </div>
           <div style={{flex:1}}/>
           {/* Estado conexión */}
