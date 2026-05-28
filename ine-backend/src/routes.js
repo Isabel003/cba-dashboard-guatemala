@@ -49,11 +49,11 @@ function requireData(req, res, next) {
 
 // ── Middleware: API key de Anthropic configurada ──────────────
 function requireAIKey(req, res, next) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return res.status(503).json({
       ok: false,
-      error: "ANTHROPIC_API_KEY no configurada en el archivo .env del backend.",
-      ayuda: "Agrega: ANTHROPIC_API_KEY=sk-ant-... en tu archivo .env y reinicia el servidor.",
+      error: "OPENAI_API_KEY no configurada en el archivo .env del backend.",
+      ayuda: "Agrega: OPENAI_API_KEY=sk-proj-... en tu archivo .env y reinicia el servidor.",
       docs: "https://console.anthropic.com/settings/keys",
     });
   }
