@@ -4,7 +4,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Legend
 } from "recharts";
 
-const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";
+const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";;
 
 // ── Paleta de colores (referencia imagen) ────────────────────
 const LIGHT = {
@@ -266,32 +266,47 @@ const BarraGrupo=({nombre,valor,max,t})=>(
   </div>
 );
 
-// Panel IA
+// Panel IA — carga automática al conectar
 function IAPanel({api,t}) {
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState(null);
-  const cargar=async()=>{setLoading(true);setError(null);try{setData(await api.iaAnalisis());}catch(e){setError(e.message);}setLoading(false);};
+
+  // Auto-cargar cuando la IA esté disponible y no haya datos
+  useEffect(()=>{
+    if(api.iaKeyOk&&!data&&!loading){
+      setLoading(true);
+      api.iaAnalisis()
+        .then(r=>setData(r))
+        .catch(e=>setError(e.message))
+        .finally(()=>setLoading(false));
+    }
+  },[api.iaKeyOk]);
+
   if(!api.iaKeyOk&&api.iaKeyOk!==null) return(
     <div style={{background:t.card,borderRadius:14,padding:22,border:`1px solid ${t.border}`,height:"100%",boxSizing:"border-box"}}>
-      <div style={{fontSize:13,fontWeight:700,color:t.text,marginBottom:12}}>Análisis IA</div>
+      <div style={{fontSize:13,fontWeight:700,color:t.text,marginBottom:4}}>Análisis IA</div>
+      <div style={{fontSize:11,color:t.textMuted,marginBottom:12}}>Analista · genera observaciones</div>
       <div style={{background:t.accentSoft,borderRadius:10,padding:14,border:`1px solid ${t.accent}33`}}>
         <div style={{fontSize:12,fontWeight:700,color:t.accent,marginBottom:6}}>API Key no configurada</div>
         <div style={{fontSize:12,color:t.textSub,lineHeight:1.7}}>
           Agrega <code style={{background:t.border,borderRadius:4,padding:"1px 5px",fontSize:11}}>OPENAI_API_KEY</code> en el <strong>.env</strong> del backend.
         </div>
-        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer"
-          style={{display:"inline-block",marginTop:10,fontSize:12,color:t.accent,fontWeight:600}}>
-          Obtener API Key →
-        </a>
       </div>
     </div>
   );
   return(
     <div style={{background:t.card,borderRadius:14,padding:22,border:`1px solid ${t.border}`,display:"flex",flexDirection:"column",height:"100%",boxSizing:"border-box"}}>
-      <div style={{fontSize:13,fontWeight:700,color:t.text,marginBottom:14}}>Análisis IA</div>
+      <div style={{fontSize:13,fontWeight:700,color:t.text,marginBottom:2}}>Análisis IA</div>
+      <div style={{fontSize:11,color:t.textMuted,marginBottom:14}}>Analista · genera observaciones</div>
       {error&&<div style={{background:"#fef2f2",borderRadius:8,padding:10,marginBottom:10,fontSize:12,color:"#ef4444"}}>{error}</div>}
-      {data?(
+      {loading&&(
+        <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:10}}>
+          <div style={{width:32,height:32,border:`3px solid ${t.accentSoft}`,borderTop:`3px solid ${t.accent}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+          <div style={{fontSize:12,color:t.textSub}}>Analizando datos del INE…</div>
+        </div>
+      )}
+      {!loading&&data&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",gap:10}}>
           {[{label:"Situación",content:data.resumen,accent:"#3b82f6"},
             {label:"Alerta",content:data.alerta,accent:"#f59e0b"},
@@ -302,17 +317,15 @@ function IAPanel({api,t}) {
               <div style={{fontSize:12,color:t.textSub,lineHeight:1.65}}>{x.content}</div>
             </div>
           ))}
-          <button onClick={()=>setData(null)} style={{marginTop:"auto",background:"transparent",border:`1px solid ${t.border}`,borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:12,color:t.textSub,fontWeight:600}}>Nuevo análisis</button>
-        </div>
-      ):(
-        <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:12,textAlign:"center"}}>
-          <div style={{width:48,height:48,borderRadius:12,background:t.accentSoft,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🧠</div>
-          <div style={{fontSize:13,color:t.textSub,lineHeight:1.7,maxWidth:220}}>Claude analiza los datos reales del INE y genera observaciones contextualizadas.</div>
-          <button onClick={cargar} disabled={loading} style={{background:t.accent,color:"#fff",border:"none",borderRadius:10,padding:"10px 22px",cursor:loading?"not-allowed":"pointer",fontSize:13,fontWeight:700,opacity:loading?0.7:1}}>
-            {loading?"Analizando…":"✨ Generar análisis IA"}
-          </button>
+          <button onClick={()=>setData(null)} style={{marginTop:"auto",background:"transparent",border:`1px solid ${t.border}`,borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:12,color:t.textSub,fontWeight:600}}>Actualizar análisis</button>
         </div>
       )}
+      {!loading&&!data&&!error&&(
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{fontSize:12,color:t.textMuted}}>Conecta el backend para activar el análisis.</div>
+        </div>
+      )}
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 }
@@ -340,7 +353,15 @@ function ReportePage({api,t}) {
         </div>
       ):!rep?(
         <div style={{background:t.card,borderRadius:14,padding:40,border:`1px solid ${t.border}`,textAlign:"center"}}>
-          <div style={{width:64,height:64,borderRadius:16,background:t.accentSoft,margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>📝</div>
+          <div style={{width:64,height:64,borderRadius:16,background:t.accentSoft,margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke={t.accent} strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
           <div style={{fontSize:16,fontWeight:700,color:t.text,marginBottom:8}}>Reporte ejecutivo mensual</div>
           <div style={{fontSize:13,color:t.textSub,marginBottom:20,lineHeight:1.7,maxWidth:360,margin:"0 auto 20px"}}>Genera un análisis completo con costos, productos críticos y perspectivas.</div>
           {error&&<div style={{background:"#fef2f2",borderRadius:10,padding:12,marginBottom:14,fontSize:12,color:"#ef4444"}}>{error}</div>}
@@ -561,11 +582,14 @@ function ProductosPage({api,t}) {
         {periodosOrdenados.length>0&&(
           <div style={{position:"relative"}} onClick={e=>e.stopPropagation()}>
             <button onClick={()=>setShowPerMenu(m=>!m)} style={{
-              display:"flex",alignItems:"center",gap:8,padding:"10px 18px",
-              borderRadius:10,border:`1.5px solid ${t.accent}`,background:t.accentSoft,
-              color:t.accent,fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",
+              display:"flex",alignItems:"center",gap:8,padding:"10px 14px",
+              borderRadius:10,border:`1px solid ${t.border}`,background:t.input,
+              color:t.text,fontSize:13,fontWeight:400,cursor:"pointer",whiteSpace:"nowrap",
             }}>
-              📅 {periodoActual||"Seleccionar"} {showPerMenu?"▲":"▼"}
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" style={{flexShrink:0,color:t.textMuted}}>
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              {periodoActual||"Seleccionar"} {showPerMenu?"▲":"▼"}
             </button>
             {showPerMenu&&(
               <div style={{position:"absolute",top:"calc(100% + 8px)",right:0,zIndex:300,
@@ -598,7 +622,10 @@ function ProductosPage({api,t}) {
       {/* Filtros */}
       <div style={{display:"flex",gap:12,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{flex:1,minWidth:180,position:"relative"}}>
-          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:t.textMuted}}>🔍</span>
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+            style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:t.textMuted,pointerEvents:"none"}}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar producto…"
             style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none",boxSizing:"border-box"}}/>
         </div>
@@ -859,7 +886,7 @@ function ComparadorPage({api,t}) {
           <div style={{flex:1,minWidth:180}}>
             <div style={{fontSize:11,color:t.textMuted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}}>Período base</div>
             <select value={perA||""} onChange={e=>setPerA(e.target.value)}
-              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${perA?t.accent:t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
+              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
               <option value="">Seleccionar mes...</option>
               {periodosOrdenados.map(p=><option key={p} value={p}>{p}</option>)}
             </select>
@@ -874,7 +901,7 @@ function ComparadorPage({api,t}) {
           <div style={{flex:1,minWidth:180}}>
             <div style={{fontSize:11,color:t.textMuted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}}>Período a comparar</div>
             <select value={perB||""} onChange={e=>setPerB(e.target.value)}
-              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${perB?t.accent:t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
+              style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none"}}>
               <option value="">Seleccionar mes...</option>
               {periodosOrdenados.map(p=><option key={p} value={p}>{p}</option>)}
             </select>
@@ -932,7 +959,10 @@ function ComparadorPage({api,t}) {
       {comparativa.length>0&&(
         <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
           <div style={{flex:1,minWidth:180,position:"relative"}}>
-            <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:t.textMuted}}>🔍</span>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+              style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:t.textMuted,pointerEvents:"none"}}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar producto..."
               style={{width:"100%",padding:"9px 12px 9px 34px",borderRadius:10,border:`1px solid ${t.border}`,background:t.input,color:t.text,fontSize:13,outline:"none",boxSizing:"border-box"}}/>
           </div>
