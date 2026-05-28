@@ -322,7 +322,7 @@ function IAPanel({api,t}) {
       )}
       {!loading&&!data&&!error&&(
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{fontSize:12,color:t.textMuted}}>Conecta el backend para activar el análisis.</div>
+          <div style={{fontSize:12,color:t.textMuted}}>Da click en actualizar los datos</div>
         </div>
       )}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
