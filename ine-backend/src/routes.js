@@ -68,7 +68,7 @@ router.get("/status", (req, res) => {
   ok(res, {
     estado:              db.estado,
     ultimaActualizacion: db.ultimaActualizacion,
-    iaDisponible:        !!process.env.ANTHROPIC_API_KEY,
+    iaDisponible:        !!process.env.OPENAI_API_KEY,
     registros: {
       cbauPercapita:    db.cbauPercapita.length,
       cbarPercapita:    db.cbarPercapita.length,
