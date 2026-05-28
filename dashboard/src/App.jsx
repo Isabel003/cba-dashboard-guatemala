@@ -4,7 +4,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Legend
 } from "recharts";
 
-const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";;
+const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/v1";
 
 // ── Paleta de colores (referencia imagen) ────────────────────
 const LIGHT = {
@@ -266,22 +266,12 @@ const BarraGrupo=({nombre,valor,max,t})=>(
   </div>
 );
 
-// Panel IA — carga automática al conectar
+// Panel IA — carga manual con botón
 function IAPanel({api,t}) {
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState(null);
-
-  // Auto-cargar cuando la IA esté disponible y no haya datos
-  useEffect(()=>{
-    if(api.iaKeyOk&&!data&&!loading){
-      setLoading(true);
-      api.iaAnalisis()
-        .then(r=>setData(r))
-        .catch(e=>setError(e.message))
-        .finally(()=>setLoading(false));
-    }
-  },[api.iaKeyOk]);
+  const cargar=async()=>{setLoading(true);setError(null);try{setData(await api.iaAnalisis());}catch(e){setError(e.message);}setLoading(false);};
 
   if(!api.iaKeyOk&&api.iaKeyOk!==null) return(
     <div style={{background:t.card,borderRadius:14,padding:22,border:`1px solid ${t.border}`,height:"100%",boxSizing:"border-box"}}>
@@ -321,8 +311,11 @@ function IAPanel({api,t}) {
         </div>
       )}
       {!loading&&!data&&!error&&(
-        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{fontSize:12,color:t.textMuted}}>Da click en actualizar los datos</div>
+        <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:12,textAlign:"center"}}>
+          <div style={{fontSize:13,color:t.textSub,lineHeight:1.7,maxWidth:220}}>Analiza los datos reales del INE</div>
+          <button onClick={cargar} disabled={loading} style={{background:t.accent,color:"#fff",border:"none",borderRadius:10,padding:"10px 22px",cursor:loading?"not-allowed":"pointer",fontSize:13,fontWeight:700,opacity:loading?0.7:1}}>
+            {loading?"Analizando…":"Generar análisis IA"}
+          </button>
         </div>
       )}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -385,9 +378,6 @@ function ReportePage({api,t}) {
           ))}
           <div style={{display:"flex",gap:10}}>
             <button onClick={()=>setRep(null)} style={{background:"transparent",border:`1px solid ${t.border}`,borderRadius:10,padding:"10px 20px",cursor:"pointer",fontSize:13,color:t.textSub,fontWeight:600}}>Nuevo reporte</button>
-            <button onClick={()=>{const b=new Blob([Object.entries(rep).map(([k,v])=>`## ${k}\n${v}`).join("\n\n")],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="reporte-cba.txt";a.click();}} style={{background:t.accent,color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",cursor:"pointer",fontSize:13,fontWeight:700}}>
-              Descargar
-            </button>
           </div>
         </div>
       )}
@@ -717,7 +707,7 @@ function ProductosPage({api,t}) {
                   ))}
                 </div>
               ):(
-                <button onClick={()=>analizarProducto(modal)} style={{background:t.accent,color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700}}>✨ Analizar con IA</button>
+                <button onClick={()=>analizarProducto(modal)} style={{background:t.accent,color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700}}>Analizar con IA</button>
               )}
             </div>
           </div>
