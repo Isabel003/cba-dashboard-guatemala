@@ -330,8 +330,6 @@ function IAPanel({api,t}) {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
-  </>
-  );
 }
 
 // Reporte IA
@@ -1085,7 +1083,8 @@ export default function App() {
   const api=useINEApi();
 
   return(
-    <><GlobalStyles/>
+    <>
+    <GlobalStyles/>
     <div style={{display:"flex",height:"100vh",background:"transparent",fontFamily:"'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif",overflow:"hidden",fontSize:14}}>
       {/* Sidebar */}
       <div style={{width:sidebarOpen?250:64,background:t.sidebar,display:"flex",flexDirection:"column",transition:"width .2s ease",overflow:"hidden",flexShrink:0,borderRight:"1px solid rgba(255,255,255,0.04)"}}>
@@ -1180,5 +1179,6 @@ export default function App() {
         </div>
       </div>
     </div>
+    </>
   );
 }
