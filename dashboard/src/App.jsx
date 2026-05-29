@@ -8,7 +8,7 @@ const API_BASE = "https://cba-dashboard-guatemala-production.up.railway.app/api/
 
 // ── Paleta de colores (referencia imagen) ────────────────────
 const LIGHT = {
-  bg:         "#f0f4f8",
+  bg:         "#f0f5f9",  // textura aplicada via CSS global
   card:       "#ffffff",
   sidebar:    "#0d1f2d",
   sidebarSub: "#1a3347",
@@ -16,10 +16,10 @@ const LIGHT = {
   textSub:    "#64748b",
   textMuted:  "#94a3b8",
   border:     "#e2e8f0",
-  accent:     "#10b981",   // esmeralda — color principal
-  accentSoft: "#ecfdf5",
-  accentDark: "#059669",
-  positive:   "#10b981",
+  accent:     "#0e7490",   // esmeralda — color principal
+  accentSoft: "#f0f9ff",
+  accentDark: "#0369a1",
+  positive:   "#0e7490",
   negative:   "#ef4444",
   neutral:    "#f59e0b",
   gridLine:   "#f1f5f9",
@@ -36,10 +36,10 @@ const DARK = {
   textSub:    "#64748b",
   textMuted:  "#334155",
   border:     "#1e3347",
-  accent:     "#10b981",
-  accentSoft: "#042f1e",
-  accentDark: "#34d399",
-  positive:   "#34d399",
+  accent:     "#0e7490",
+  accentSoft: "#0c4a6e",
+  accentDark: "#38bdf8",
+  positive:   "#38bdf8",
   negative:   "#f87171",
   neutral:    "#fbbf24",
   gridLine:   "#0d1f2d",
@@ -50,7 +50,7 @@ const DARK = {
 
 // ── Colores por grupo alimenticio ────────────────────────────
 const CAT_COLORS = {
-  "Cereales y derivados":    "#10b981",
+  "Cereales y derivados":    "#0e7490",
   "Verduras y hortalizas":   "#22c55e",
   "Carnes":                  "#ef4444",
   "Lácteos y huevos":        "#3b82f6",
@@ -227,30 +227,39 @@ const ChangeBadge=({value})=>{
   return(
     <span style={{display:"inline-flex",alignItems:"center",gap:3,
       background:z?"#f1f5f9":v>0?"#fef2f2":"#f0fdf4",
-      color:z?"#64748b":v>0?"#ef4444":"#10b981",
+      color:z?"#64748b":v>0?"#ef4444":"#0e7490",
       borderRadius:6,padding:"3px 8px",fontSize:12,fontWeight:700}}>
       {z?"—":v>0?"↑":"↓"} {z?"0.00":Math.abs(v).toFixed(2)}%
     </span>
   );
 };
 
-// KPI Card — con contexto guatemalteco
-const KPI=({label,value,sub,subIcon,subColor,t,unit})=>(
-  <div style={{background:t.card,borderRadius:14,padding:"22px 24px",
-    border:`1px solid ${t.border}`,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
-    <div style={{fontSize:11,color:t.textMuted,fontWeight:600,
-      textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>{label}</div>
-    {unit&&<div style={{fontSize:10,color:t.accent,fontWeight:600,marginBottom:8,
-      background:t.accentSoft,display:"inline-block",padding:"1px 8px",borderRadius:20}}>{unit}</div>}
-    <div style={{fontSize:30,fontWeight:800,color:t.text,lineHeight:1,marginBottom:10,marginTop:unit?4:0}}>{value}</div>
-    {sub&&(
-      <div style={{display:"flex",alignItems:"center",gap:5,fontSize:13}}>
-        <span style={{color:subColor||t.accent,fontWeight:700}}>{subIcon}{sub}</span>
-        <span style={{color:t.textSub}}>vs mes anterior</span>
-      </div>
-    )}
-  </div>
-);
+// KPI Card — Opción A: borde izquierdo con acento
+const KPI=({label,value,sub,subIcon,subColor,t,unit,accentColor})=>{
+  const bColor=accentColor||t.accent;
+  return(
+    <div style={{background:t.card,borderRadius:"0 10px 10px 0",padding:"20px 22px",
+      border:`0.5px solid ${t.border}`,borderLeft:`3px solid ${bColor}`,
+      boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+      <div style={{fontSize:11,color:t.textMuted,fontWeight:600,
+        textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>{label}</div>
+      {unit&&(
+        <div style={{fontSize:10,color:bColor,fontWeight:600,marginBottom:8,
+          background:t.accentSoft,display:"inline-block",padding:"2px 9px",borderRadius:20,
+          border:`0.5px solid ${bColor}33`}}>{unit}</div>
+      )}
+      <div style={{fontSize:30,fontWeight:700,color:t.text,lineHeight:1,
+        marginBottom:10,marginTop:unit?6:4}}>{value}</div>
+      {sub&&(
+        <div style={{display:"flex",alignItems:"center",gap:5,fontSize:12,
+          paddingTop:10,borderTop:`0.5px solid ${t.border}`}}>
+          <span style={{color:subColor||t.accent,fontWeight:600}}>{subIcon}{sub}</span>
+          <span style={{color:t.textSub}}>vs mes anterior</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Barra de progreso para grupos (panel derecho)
 const BarraGrupo=({nombre,valor,max,t})=>(
@@ -312,7 +321,7 @@ function IAPanel({api,t}) {
       )}
       {!loading&&!data&&!error&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:12,textAlign:"center"}}>
-          <div style={{fontSize:13,color:t.textSub,lineHeight:1.7,maxWidth:220}}>Analiza los datos reales del INE</div>
+          <div style={{fontSize:13,color:t.textSub,lineHeight:1.7,maxWidth:220}}>GPT-4o-mini analiza los datos reales del INE y genera observaciones contextualizadas.</div>
           <button onClick={cargar} disabled={loading} style={{background:t.accent,color:"#fff",border:"none",borderRadius:10,padding:"10px 22px",cursor:loading?"not-allowed":"pointer",fontSize:13,fontWeight:700,opacity:loading?0.7:1}}>
             {loading?"Analizando…":"Generar análisis IA"}
           </button>
@@ -320,6 +329,8 @@ function IAPanel({api,t}) {
       )}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
+  );
+  </>
   );
 }
 
@@ -438,7 +449,7 @@ function OverviewPage({api,t}) {
           sub={`${r.variacionMensualR>0?"+":""}${r.variacionMensualR}%`}
           subIcon={r.variacionMensualR>0?"↗ ":"↘ "} subColor={r.variacionMensualR>0?t.positive:t.negative} t={t}/>
         <KPI label="Brecha CBAI-CBAR" value={fQ(r.brechaUrbanoRural)}
-          unit="diferencia Urbana vs Rural"
+          unit="diferencia Urbana vs Rural" accentColor="#f59e0b"
           sub="-0.6% reducción mensual" subColor={t.positive} t={t}/>
         <KPI label="Var. anual CBAI" value={`${r.variacionAnualU??"-"}%`}
           unit="acumulado 12 meses"
@@ -1047,6 +1058,25 @@ const NAV=[
   {id:"reporte",     Icon:IcoIA,        label:"Reporte IA"},
 ];
 
+
+// ── Estilos globales: fuente + textura fondo ─────────────────
+const GlobalStyles = () => (
+  <>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <style>{`
+      body { margin: 0; padding: 0; }
+      #root {
+        background-color: #f0f5f9;
+        background-image: radial-gradient(#0e749015 1px, transparent 1px);
+        background-size: 24px 24px;
+        min-height: 100vh;
+      }
+    `}</style>
+  </>
+);
+
 // ── APP ───────────────────────────────────────────────────────
 export default function App() {
   const [page,setPage]=useState("overview");
@@ -1055,7 +1085,8 @@ export default function App() {
   const api=useINEApi();
 
   return(
-    <div style={{display:"flex",height:"100vh",background:t.bg,fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",overflow:"hidden",fontSize:14}}>
+    <><GlobalStyles/>
+    <div style={{display:"flex",height:"100vh",background:"transparent",fontFamily:"'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif",overflow:"hidden",fontSize:14}}>
       {/* Sidebar */}
       <div style={{width:sidebarOpen?250:64,background:t.sidebar,display:"flex",flexDirection:"column",transition:"width .2s ease",overflow:"hidden",flexShrink:0,borderRight:"1px solid rgba(255,255,255,0.04)"}}>
         {/* Logo */}
