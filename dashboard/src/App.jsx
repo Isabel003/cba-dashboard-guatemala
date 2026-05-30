@@ -321,7 +321,7 @@ function IAPanel({api,t}) {
       )}
       {!loading&&!data&&!error&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:12,textAlign:"center"}}>
-          <div style={{fontSize:13,color:t.textSub,lineHeight:1.7,maxWidth:220}}>GPT-4o-mini analiza los datos reales del INE y genera observaciones contextualizadas.</div>
+          <div style={{fontSize:13,color:t.textSub,lineHeight:1.7,maxWidth:220}}>Analiza los datos reales del INE y genera observaciones.</div>
           <button onClick={cargar} disabled={loading} style={{background:t.accent,color:"#fff",border:"none",borderRadius:10,padding:"10px 22px",cursor:loading?"not-allowed":"pointer",fontSize:13,fontWeight:700,opacity:loading?0.7:1}}>
             {loading?"Analizando…":"Generar análisis IA"}
           </button>
